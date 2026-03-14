@@ -1,4 +1,3 @@
-// Define an array of color palettes
 const colorPalettes = [
   { primary: "#FF8B8B", secondary: "#9C2525" },
   { primary: "#F9F7E8", secondary: "#62BFAD" },
@@ -122,65 +121,128 @@ const colorPalettes = [
   { primary: '#444444', secondary: '#4DC47D' }
 ];
 
-// Create a function to generate the color palette HTML
-function generatePaletteHTML(palette) {
-  return `
-        <div class="palette" style="background-color: ${palette.primary}; color: ${palette.secondary};">
-      <div><strong>Primary:</strong> ${palette.primary}</div>
-      <div><strong>Secondary:</strong> ${palette.secondary}</div>
-      <div class="hex-values-line">
-        <div class="hex-color primary-color" style="background-color: ${palette.primary};"></div>
-        <div class="hex-color secondary-color" style="background-color: ${palette.secondary};"></div>
-      </div>
-    </div>
-      `;
+const container = document.getElementById('palettes-container');
+const paletteSearch = document.getElementById('palette-search');
+const clearSearchButton = document.getElementById('clear-search');
+const toggleViewButton = document.getElementById('toggle-view');
+const resultsCount = document.getElementById('results-count');
+const paletteTotal = document.getElementById('palette-total');
+const emptyState = document.getElementById('empty-state');
+const copiedAlert = document.getElementById('copied-alert');
+
+paletteTotal.textContent = colorPalettes.length;
+
+function getReadableTextColor(hex) {
+  const cleanHex = hex.replace('#', '');
+  const r = parseInt(cleanHex.substring(0, 2), 16);
+  const g = parseInt(cleanHex.substring(2, 4), 16);
+  const b = parseInt(cleanHex.substring(4, 6), 16);
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 160 ? '#0f172a' : '#ffffff';
 }
 
-// Add click event listeners to hex color elements
-document.addEventListener("click", function (event) {
-  if (event.target.classList.contains("hex-color")) {
-    const backgroundColor = event.target.style.backgroundColor;
-    const hexValue = rgbToHex(backgroundColor);
-    copyToClipboard(hexValue);
-    showCopiedAlert(hexValue);
+function generatePaletteHTML(palette, index) {
+  const cardTextColor = getReadableTextColor(palette.primary);
+
+  return `
+    <article class="palette" style="background:${palette.primary}; color:${cardTextColor};" data-primary="${palette.primary.toLowerCase()}" data-secondary="${palette.secondary.toLowerCase()}">
+      <div class="palette-inner">
+        <span class="palette-badge">Palette ${index + 1}</span>
+        <div>
+          <h2 class="palette-title">Primary + Secondary</h2>
+        </div>
+
+        <div class="swatches">
+          <button class="swatch" type="button" data-hex="${palette.primary}" aria-label="Copy primary color ${palette.primary}">
+            <span class="swatch-chip" style="background:${palette.primary};"></span>
+            <span class="swatch-text">
+              <span class="swatch-label">Primary</span>
+              <span class="swatch-code">${palette.primary}</span>
+            </span>
+          </button>
+
+          <button class="swatch" type="button" data-hex="${palette.secondary}" aria-label="Copy secondary color ${palette.secondary}">
+            <span class="swatch-chip" style="background:${palette.secondary};"></span>
+            <span class="swatch-text">
+              <span class="swatch-label">Secondary</span>
+              <span class="swatch-code">${palette.secondary}</span>
+            </span>
+          </button>
+        </div>
+
+        <div class="palette-actions">
+          <span class="palette-index">#${String(index + 1).padStart(3, '0')}</span>
+          <button class="palette-copy" type="button" data-hex-pair="${palette.primary} ${palette.secondary}" aria-label="Copy both colors ${palette.primary} and ${palette.secondary}">Copy pair</button>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function renderPalettes() {
+  const query = paletteSearch.value.trim().toLowerCase();
+  const filtered = colorPalettes.filter((palette) => {
+    if (!query) return true;
+    return palette.primary.toLowerCase().includes(query) || palette.secondary.toLowerCase().includes(query);
+  });
+
+  container.innerHTML = filtered.map((palette, index) => generatePaletteHTML(palette, colorPalettes.indexOf(palette))).join('');
+  resultsCount.textContent = `Showing ${filtered.length} ${filtered.length === 1 ? 'palette' : 'palettes'}`;
+  emptyState.hidden = filtered.length !== 0;
+}
+
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (error) {
+    const helper = document.createElement('textarea');
+    helper.value = text;
+    document.body.appendChild(helper);
+    helper.select();
+    document.execCommand('copy');
+    document.body.removeChild(helper);
+  }
+}
+
+function showCopiedAlert(message) {
+  copiedAlert.textContent = message;
+  copiedAlert.hidden = false;
+  window.clearTimeout(showCopiedAlert.timeoutId);
+  showCopiedAlert.timeoutId = window.setTimeout(() => {
+    copiedAlert.hidden = true;
+  }, 2200);
+}
+
+paletteSearch.addEventListener('input', renderPalettes);
+
+clearSearchButton.addEventListener('click', () => {
+  paletteSearch.value = '';
+  renderPalettes();
+  paletteSearch.focus();
+});
+
+toggleViewButton.addEventListener('click', () => {
+  const isCompact = document.body.classList.toggle('compact-view');
+  toggleViewButton.setAttribute('aria-pressed', String(isCompact));
+  toggleViewButton.textContent = isCompact ? 'Expanded view' : 'Compact view';
+});
+
+container.addEventListener('click', async (event) => {
+  const swatch = event.target.closest('.swatch');
+  const pairButton = event.target.closest('.palette-copy');
+
+  if (swatch) {
+    const hex = swatch.dataset.hex;
+    await copyToClipboard(hex);
+    showCopiedAlert(`Copied ${hex}`);
+    return;
+  }
+
+  if (pairButton) {
+    const pair = pairButton.dataset.hexPair;
+    await copyToClipboard(pair);
+    showCopiedAlert(`Copied pair ${pair}`);
   }
 });
 
-// Function to convert RGB to hex
-function rgbToHex(rgb) {
-  const rgbValues = rgb.match(/\d+/g);
-  const hexValues = rgbValues.map((value) =>
-    parseInt(value).toString(16).padStart(2, "0")
-  );
-  return `#${hexValues.join("")}`;
-}
-
-// Function to copy text to clipboard
-function copyToClipboard(text) {
-  const dummy = document.createElement("textarea");
-  document.body.appendChild(dummy);
-  dummy.value = text;
-  dummy.select();
-  document.execCommand("copy");
-  document.body.removeChild(dummy);
-}
-
-// Function to show copied alert
-function showCopiedAlert(hexValue) {
-  const alert = document.createElement("div");
-  alert.classList.add("copied-alert");
-  alert.textContent = `Copied: ${hexValue}`;
-  document.body.appendChild(alert);
-  setTimeout(() => {
-    document.body.removeChild(alert);
-  }, 2000); // Remove the alert after 2 seconds
-}
-
-// Get the container element
-const container = document.getElementById("palettes-container");
-
-// Generate the HTML for each color palette and append it to the container
-colorPalettes.forEach((palette) => {
-  const paletteHTML = generatePaletteHTML(palette);
-  container.innerHTML += paletteHTML;
-});
+renderPalettes();
