@@ -1,11 +1,11 @@
 :root {
-  --bg: #f4f9f1;
+  --bg: #f5f8fc;
   --surface: #ffffff;
-  --surface-strong: #dbe8d4;
+  --surface-strong: #e3ecf7;
   --text: #0f172a;
-  --muted: #47615a;
-  --accent: #5caf47;
-  --accent-strong: #93c43e;
+  --muted: #51627a;
+  --accent: #4f8ef7;
+  --accent-strong: #7fb3ff;
   --accent-warm: #f18426;
   --shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
   --radius: 20px;
