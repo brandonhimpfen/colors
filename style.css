@@ -140,8 +140,8 @@ h1 {
   gap: 0.4rem;
   padding: 0.55rem 0.85rem;
   border-radius: 999px;
-  background: #eef8e8;
-  border: 1px solid #d6ebc8;
+  background: #f3f7ff;
+  border: 1px solid #e3edff;
   font-size: 0.95rem;
 }
 
@@ -432,7 +432,7 @@ body.compact-view .swatch-chip {
 
 
 .hero-card {
-  background: linear-gradient(180deg, rgba(147, 196, 62, 0.12), rgba(92, 175, 71, 0.08)), rgba(255, 255, 255, 0.92);
+  background: linear-gradient(180deg, rgba(96, 165, 250, 0.10), rgba(59, 130, 246, 0.06)), rgba(255, 255, 255, 0.92);
 }
 
 .button:hover,
